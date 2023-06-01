@@ -206,7 +206,8 @@ if __name__ == '__main__':
         print("파일 저장 완료 프로그램 종료")
         exit_program()
         sys.exit(0)
-
+    
+    #간단한 ui 구성
     def qt_widget():
         app = QApplication(sys.argv)
         window = QWidget()
