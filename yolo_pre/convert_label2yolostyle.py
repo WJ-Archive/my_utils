@@ -44,8 +44,8 @@ def write_yolo_label(cls:str, y_xywh:list, fp, save_path='./'):
     Yolo Label txt 파일로 write 하는 함수
 
     밖에서 파일포인터 열고 포인터를 argument로 받아 여기서 작업 후 
-    끝나면 밖에서 다시 닫는 식으로 사용해야함. (함수 들어올때마다 파일을 열면 속도저하 문제 발생)
-    데이터셋마다 json 형식이 달라서 일단 이 방식이 최선인듯 
+    끝나면 밖에서 다시 닫는 식으로 사용해야함.
+    (함수 들어올때마다 파일을 열면 속도저하 문제 발생)
     '''
     yx, yy, yw, yh = map(str,y_xywh)
     fp.write(' '.join([cls, yx, yy, yw, yh]))
