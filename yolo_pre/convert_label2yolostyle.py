@@ -18,8 +18,7 @@ def convert_yolo_style(xyxy:list, img_size:list) -> list:
     ## 좌표를 이미지 비율에 맞춰 변환하기 위한 dw, dh
     dw = 1./img_w
     dh = 1./img_h
-    
- 
+   
     x = float(x1)
     y = float(y1)
     w = float(x2)-float(x1)     #xyxy2xywh
