@@ -99,7 +99,7 @@ def generate_yolo_label(obj:dict, json_file_name:str, image_inf:dict) -> str:
                     #만약 attribute 가 동시에 2개 이상 있다면 2가지 값을 합쳐서 클래스를 만듬. (ex. red, left_arrow => red_left_arrow : 0)
                     mul_class = '_'.join(traffic_signal)                    
 
-                    # 2개이상의 Class가 mapping Dictionary 에 존재하면 t_class 에 할당. 아니면 None 으로 변경 
+                    # 2개이상의 Class가 mapping Dictionary 에 존재하면 mapping된 클래스를 t_class 변수에 . 아니면 None 으로 변경 
                     t_class = t_class_map[mul_class] if mul_class in t_class_map else None
 
                     if t_class != None:                                         
