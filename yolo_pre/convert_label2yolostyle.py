@@ -15,21 +15,23 @@ def convert_yolo_style(xyxy:list, img_size:list) -> list:
     
     (x1, y1, x2, y2) = xyxy
     img_w, img_h = img_size
-    ##
+    ## 좌표를 이미지 비율에 맞춰 변환하기 위한 dw, dh
     dw = 1./img_w
     dh = 1./img_h
     
-    #xyxy2yolo_xywh
+ 
     x = float(x1)
     y = float(y1)
     w = float(x2)-float(x1)     #xyxy2xywh
     h = float(y2)-float(y1)
-
+    
+    # x와 y 의 중심좌표 업데이트 
     x = (x + x + w)/2.0 
     y = (y + y + h)/2.0
     w = w
     h = h
-
+    
+    # 이미지 크기에 대한 비율로 변환
     x = round(x*dw, 6)
     w = round(w*dw, 6)
     y = round(y*dh, 6)
