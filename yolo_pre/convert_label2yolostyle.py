@@ -2,11 +2,6 @@ import json
 import os
 import shutil
 
-SOURCE_LABEL_PATH = '../data/Validation/label/'
-SOURCE_IMG_PATH = '../data/Validation/image/'
-YOLO_LABEL_PATH = '../yolov5/content/dataset/valid/'
-PRE_PROCESSING_DIR = '../data_pre/Validation/'
-
 def convert_yolo_style(xyxy:list, img_size:list) -> list:
     '''
     Labeling 된 BBOX의 x1, y1, x2, y2 좌표를 YoloStyle 로 변환 하는 코드
@@ -15,22 +10,21 @@ def convert_yolo_style(xyxy:list, img_size:list) -> list:
     
     (x1, y1, x2, y2) = xyxy
     img_w, img_h = img_size
-    ## 좌표를 이미지 비율에 맞춰 변환하기 위한 dw, dh
+    ##
     dw = 1./img_w
     dh = 1./img_h
-   
+    
+    #xyxy2yolo_xywh
     x = float(x1)
     y = float(y1)
     w = float(x2)-float(x1)     #xyxy2xywh
     h = float(y2)-float(y1)
-    
-    # x와 y 의 중심좌표 업데이트 
+
     x = (x + x + w)/2.0 
     y = (y + y + h)/2.0
     w = w
     h = h
-    
-    # 이미지 크기에 대한 비율로 변환
+
     x = round(x*dw, 6)
     w = round(w*dw, 6)
     y = round(y*dh, 6)
@@ -44,8 +38,8 @@ def write_yolo_label(cls:str, y_xywh:list, fp, save_path='./'):
     Yolo Label txt 파일로 write 하는 함수
 
     밖에서 파일포인터 열고 포인터를 argument로 받아 여기서 작업 후 
-    끝나면 밖에서 다시 닫는 식으로 사용해야함.
-    (함수 들어올때마다 파일을 열면 속도저하 문제 발생)
+    끝나면 밖에서 다시 닫는 식으로 사용해야함. (함수 들어올때마다 파일을 열면 속도저하 문제 발생)
+    데이터셋마다 json 형식이 달라서 일단 이 방식이 최선인듯 
     '''
     yx, yy, yw, yh = map(str,y_xywh)
     fp.write(' '.join([cls, yx, yy, yw, yh]))
@@ -53,7 +47,7 @@ def write_yolo_label(cls:str, y_xywh:list, fp, save_path='./'):
     print(" {} : write Success".format(str(fp)))
 
 
-def generate_yolo_label(obj:dict, json_file_name:str, image_inf:dict) -> str: 
+def generate_yolo_label(obj:dict, json_file_name:str, image_inf:dict, destination_path:str='./') -> str: 
     '''
     JSON 파일의 {Attribute ('red':'on/off','yellow':'on/off','green':'on/off','left_arrow':'on/off','x_light':'on/off','others_arrow':'on/off')}
     에 on/off 유무에 따라 Class 를 정하고 Mapping 후 Yolostyle로 변경하여 txt 파일로 생성하는 함수.
@@ -70,6 +64,7 @@ def generate_yolo_label(obj:dict, json_file_name:str, image_inf:dict) -> str:
 
     따라서 여러개 나온 클래스중 의미가 같은걸 최대한 묶어서 학습, 수량이 적은 데이터셋은 학습 안하고 제외, 필수적인 데이터셋은 Augmentation이라도 해서 학습시킴
     '''
+
     #Class Mapping Dictionary
     t_class_map = {'unknown':'0',                                              
                    'red':'1',
@@ -82,7 +77,7 @@ def generate_yolo_label(obj:dict, json_file_name:str, image_inf:dict) -> str:
 
     try:
         #txt file open
-        with open(YOLO_LABEL_PATH+json_file_name[:-4]+"txt", "a") as fp:
+        with open(destination_path+json_file_name[:-4]+"txt", "a") as fp:
 
             for attr in obj['attribute']:
                 
@@ -99,7 +94,7 @@ def generate_yolo_label(obj:dict, json_file_name:str, image_inf:dict) -> str:
                     #만약 attribute 가 동시에 2개 이상 있다면 2가지 값을 합쳐서 클래스를 만듬. (ex. red, left_arrow => red_left_arrow : 0)
                     mul_class = '_'.join(traffic_signal)                    
 
-                    # 2개이상의 Class가 mapping Dictionary 에 존재하면 mapping된 클래스를 t_class 변수에 . 아니면 None 으로 변경 
+                    # 2개이상의 Class가 mapping Dictionary 에 존재하면 t_class 에 할당. 아니면 None 으로 변경 
                     t_class = t_class_map[mul_class] if mul_class in t_class_map else None
 
                     if t_class != None:                                         
@@ -122,8 +117,7 @@ def generate_yolo_label(obj:dict, json_file_name:str, image_inf:dict) -> str:
         print(e)
         ...
 
-
-def delete_empty_files(path=YOLO_LABEL_PATH):
+def delete_empty_files(path='./'):
     '''
     내용 없는 파일 삭제
     '''
@@ -135,51 +129,88 @@ def delete_empty_files(path=YOLO_LABEL_PATH):
             print(f'{filepath} has been removed')
 
 
-def main():
+def main(YOLO_PATH='./'):
 
-    files = os.listdir(SOURCE_LABEL_PATH)
-    try:
-        #0. json 파일 한개씩 read
-        for json_file_name in files:
-            file_path = os.path.join(SOURCE_LABEL_PATH, json_file_name)
-            
-            #1. 파일 내용 json read
-            with open(file_path, "r") as str_json:
-                label_json = json.load(str_json)
+    os.chdir(YOLO_PATH) #경로 yolo_path 로 변경
+    if not os.path.exists('dataset'):
+        os.makedirs('dataset')
 
-            #print("json_file_name : {}".format(json_file_name))SOURCE_LABEL_PATH
-            #"image":{"filename":"s01000113.jpg","imsize":[1280,720]}
-            image_inf = label_json['image']
-            
-            for obj in label_json['annotation']:
-              
-                if obj['class'] == 'traffic_light': # 2. class 가 traffic light 일 경우만 txt 파일에씀.
-                    #copy_file(obj, json_file_name, image_inf)
-                    generate_yolo_label(obj, json_file_name, image_inf)
+    TRAINING_LABEL_PATH = './dataset/labels_json/train/'
+    VALIDATION_LABEL_PATH = './dataset/labels_json/val/'
 
-                elif obj['class'] == 'traffic_information': # 유고정보 (cone, pothole, constructionm, unknone) 이라는데 같이 학습 시켜볼까?
-                    #print(match_file, img_size)
-                    continue
+    TRAINING_YOLO_LABEL_PATH = './dataset/labels/train/'
+    VALIDATION_YOLO_LABEL_PATH = './dataset/labels/val/'
 
-                elif obj['class'] == 'traffic_sign': # class 가 traffic sign 일 때는 무시. (기존 traffic sign 데이터셋이 더 상세하게 구성 되어있음) 
-                    continue    
+    # 매칭되는 이미지의 크기 직접 구해서 넣으려 했는데 json 파일에 이미지 크기 정보도 같이 있어서 그거 씀 
+    #TRAINING_IMG_PATH = './dataset/images/train/'         
+    #VALIDATION_IMG_PATH = './dataset/images/val/'
 
-                else:
-                    continue
+    label_path_map ={
+        TRAINING_LABEL_PATH : TRAINING_YOLO_LABEL_PATH,
+        VALIDATION_LABEL_PATH : VALIDATION_YOLO_LABEL_PATH
+    }
+    
+    for source_label_path, yolo_label_path in label_path_map.items():
 
-        print(len(files))
+        files = os.listdir(source_label_path)
+        try:
+            #0. json 파일 한개씩 read
+            for json_file_name in files:
+                file_path = os.path.join(source_label_path, json_file_name)
+                
+                #1. 파일 내용 json read
+                with open(file_path, "r") as str_json:
+                    label_json = json.load(str_json)
 
-        # txt 파일에 내용이 없을 경우 삭제. 즉 데이터셋중 Class 에 정의 되지 않았던 객체만 있는 이미지일 경우 삭제함. 
-        # (만약 class 에 있는게 있으면 하나라도 기록이 되기 때문에 삭제 안됨) 
-        delete_empty_files(YOLO_LABEL_PATH)
+                #"image":{"filename":"s01000113.jpg","imsize":[1280,720]}
+                image_inf = label_json['image']
+                
+                for obj in label_json['annotation']:
+                
+                    if obj['class'] == 'traffic_light': # 2. class 가 traffic light 일 경우만 txt 파일에씀.
+                        generate_yolo_label(obj, json_file_name, image_inf, yolo_label_path)
 
+                    elif obj['class'] == 'traffic_information': # 유고정보 (cone, pothole, constructionm, unknone) 이라는데 같이 학습 시켜볼까?
+                        continue
 
-    except Exception as e:
-        print(e)
+                    elif obj['class'] == 'traffic_sign': # class 가 traffic sign 일 때는 무시. (기존 traffic sign 데이터셋이 더 상세하게 구성 되어있음) 
+                        continue    
+
+                    else:
+                        continue
+
+            print(len(files))
+
+            '''
+            # txt 파일에 내용이 없을 경우 삭제. 즉 데이터셋중 Class 에 정의 되지 않았던 객체만 있는 이미지일 경우 삭제함. 
+            # (만약 class 에 있는게 있으면 하나라도 기록이 되기 때문에 삭제 안됨) 
+            '''
+            delete_empty_files(yolo_label_path)
+
+        except Exception as e:
+            print(e)
 
 if __name__ == "__main__":
-    print("start")
-    main()
+    
+    YOLO_PATH = '/home/woojin/_traffic_sig/yolov5/'
+    print("path",YOLO_PATH)
+    main(YOLO_PATH)
+
+    '''
+    path
+    |-- yolov5
+        |-- dataset_util
+            |-- *[this_file]
+        |-- dataset
+            |--images
+                |-- train
+                |-- val
+            |--labels
+                |-- train
+                |-- val
+    '''
+
+
 
 
 
@@ -198,10 +229,6 @@ def copy_file(obj, json_file_name, image_inf):
     except Exception as e:
         print(e)
 """
-
-
-
-
 """
 JSON 파일 예시
 
