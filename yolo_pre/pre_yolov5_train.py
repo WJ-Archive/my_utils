@@ -139,3 +139,6 @@ if __name__ == "__main__":
     YOLO_PATH = '/home/woojin/_traffic_sig/yolov5/'
     print("path",YOLO_PATH)
     main(YOLO_PATH)
+    
+    # train 
+    # python train.py --img 640 --batch 16 --epochs 100 --data ./dataset/data.yaml --cfg ./models/yolov5s.yaml --weights yolov5s.pt --name yolov5s_results --device 5,7 --project traffic_signal_training
