@@ -13,7 +13,7 @@ import argparse
 import random
 import numpy as np
 
-#
+#TODO : bbox 라벨링 데이터도 같이 받아서 Augmentation 진행
 class Augmentation:
     def __init__(self, source_path:str, save_path:str, selected_aug:list, repeat : int, aug_mix:bool, set_rate:bool):
  
