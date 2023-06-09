@@ -7,7 +7,7 @@ import random
 import numpy as np
 
 #plan
-#데이터 증강 시키면서 라벨링 데이터도 같이 Scaling 하기...
+#라벨링 데이터도 같이 Augmentation 하기위해선...
 # 00001.jpg mapping txt 파일 예시
 # 00001.txt 
 # 0 0.123023 1.23232 3.123123 4.123123
@@ -18,8 +18,8 @@ import numpy as np
 #2. 이미지 Scaling 후 Value 안의 bbox 값도 같은 비율로 convert. 
 #ex) flip 될 경우 bbox 값도 flip, rotate 했을때는 회전해서 증가한 xyxy 만큼 bbox의 위치를 늘리거나 줄여야함ㄷㄷ. Noise 의 경우에는 변동 없음,
 
-# Geometric Transformation(flip, rotate, contrast)와 Color Space transformations(gray,hsv) 
-# ML
+# Basic image manipulation 만 구현
+# 그중 Geometric Transformation(flip, rotate, contrast)와 Color Space transformations(gray,hsv) 만 구현
 # Mixing images 같은 기법은 Yolov5에서 Training 할때 어느정도 Augmentation 후 학습하기때문에 한다면 후순위로..
 
 class Augmentation_Setting:
@@ -105,7 +105,7 @@ class Geometric_Transformation(Augmentation_Setting):
     def __init__(self, parent=None):
         super().__init__(parent.img_path, parent.label_path, parent.save_path, parent.set_rate)
 
-    def cv_resize(self, img:np.array, cls_label:dict='') -> tuple:
+    def cv_resize(self, img:np.array, cls_label:dict=None) -> tuple:
 
         try:
             cv_type = "_resize_"
@@ -132,7 +132,7 @@ class Geometric_Transformation(Augmentation_Setting):
             print("error in {}".format(e))
             return "Scale Failed"
             
-    def cv_flip(self, img:np.array, cls_label:dict='') -> tuple:
+    def cv_flip(self, img:np.array, cls_label:dict=None) -> tuple:
         try:
             cv_type = '_flip_'
             
@@ -161,7 +161,7 @@ class Geometric_Transformation(Augmentation_Setting):
             return "Flip Failed"
         ...
 
-    def cv_translate(self, img:np.array, cls_label:dict='') -> tuple:
+    def cv_translate(self, img:np.array, cls_label:dict=None) -> tuple:
         #TODO : 이미지 이동시키다 바운딩 박스 밖으로 벗어나는 문제 발생. 체크후 바운딩 박스 안 벗어나게 하는 코드 작성 필요...
         try:
             yolo_label = True
@@ -196,7 +196,7 @@ class Geometric_Transformation(Augmentation_Setting):
             print("error in {}".format(e))
             return "Translate Failed"
         
-    def cv_rotate(self, img:np.array, cls_label:dict='') -> tuple:
+    def cv_rotate(self, img:np.array, cls_label:dict=None) -> tuple:
         try:
             # cv_type = "_rotate_"+str(angle)+"_"
             cv_type = "_rotate_"
@@ -220,7 +220,7 @@ class Geometric_Transformation(Augmentation_Setting):
             print("error in {}".format(e))
             return "rotate Failed"
 
-    def cv_add_noise(self, img:np.array, cls_label:dict='') -> tuple:
+    def cv_add_noise(self, img:np.array, cls_label:dict=None) -> tuple:
         # 일단 가장 널리 쓰이는 가우시안 노이즈 추가. 평균이 mean 이고 표준편차가 std 인 노이즈 이미지 생성후 add로 합침.
         try:
             cv_type = "_noise_"
@@ -248,7 +248,7 @@ class Color_Space_transformation(Augmentation_Setting):
     def __init__(self, parent=None):
         super().__init__(parent.img_path, parent.label_path, parent.save_path, parent.set_rate)
 
-    def cv_gray_scale(self, img:np.array, cls_label:dict='') -> tuple:
+    def cv_gray_scale(self, img:np.array, cls_label:dict=None) -> tuple:
         
         ...
 
@@ -350,18 +350,20 @@ def main(opt):
                         print("filename :",file_name)
                         file_path = os.path.join(IMG_PATH, file_name)
                         img = cv2.imread(file_path)
-                        
+                        print("1")
                         # execute select function 
                         for j, aug in enumerate(selected_aug):
+                            print("2")
                             cv_img, _, cv_type = augmente_dict[aug](img)
+                            print("3")
                             if opt.aug_mix:
                                 img = cv_img
                                 if j != len(selected_aug)-1:
                                     continue
                                 else:
-                                    save(SAVE_PATH, file_name, img, '_'+str(i)+'_'+'_'.join(selected_aug))
+                                    save_cvimg(SAVE_PATH, file_name, img, '_'+str(i)+'_'+'_'.join(selected_aug))
                             else:
-                                save(SAVE_PATH, file_name, cv_img, '_'+str(i)+cv_type)
+                                save_cvimg(SAVE_PATH, file_name, cv_img, '_'+str(i)+cv_type)
                 
         except Exception as e:
             print("error inasdasd {}".format(e))
