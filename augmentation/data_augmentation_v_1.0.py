@@ -7,7 +7,7 @@ import random
 import numpy as np
 
 #plan
-#라벨링 데이터도 같이 Augmentation 하기위해선...
+#데이터 증강 시키면서 라벨링 데이터도 같이 Scaling 하기...
 # 00001.jpg mapping txt 파일 예시
 # 00001.txt 
 # 0 0.123023 1.23232 3.123123 4.123123
@@ -18,8 +18,8 @@ import numpy as np
 #2. 이미지 Scaling 후 Value 안의 bbox 값도 같은 비율로 convert. 
 #ex) flip 될 경우 bbox 값도 flip, rotate 했을때는 회전해서 증가한 xyxy 만큼 bbox의 위치를 늘리거나 줄여야함ㄷㄷ. Noise 의 경우에는 변동 없음,
 
-# Basic image manipulation 만 구현
-# 그중 Geometric Transformation(flip, rotate, contrast)와 Color Space transformations(gray,hsv) 만 구현
+# Geometric Transformation(flip, rotate, contrast)와 Color Space transformations(gray,hsv) 
+# ML
 # Mixing images 같은 기법은 Yolov5에서 Training 할때 어느정도 Augmentation 후 학습하기때문에 한다면 후순위로..
 
 class Augmentation_Setting:
@@ -211,6 +211,7 @@ class Geometric_Transformation(Augmentation_Setting):
             rotation_matrix = cv2.getRotationMatrix2D((center_x ,center_y), angle, 1)     #center, angel, scale
             rotate_img = cv2.warpAffine(img, rotation_matrix, (w, h))
             
+            #... 어렵
             rotate_label = ...
 
             return rotate_img, rotate_label, cv_type
@@ -233,6 +234,8 @@ class Geometric_Transformation(Augmentation_Setting):
             gauss = np.random.normal(mean, std, img.shape).astype('uint8')
             # Add the Gaussian noise to the image
             noisy = cv2.add(img, gauss)
+            
+            #noise는 bbox 달라지는거 없기 때문에 bypass
             
             return noisy, cls_label, cv_type
         
