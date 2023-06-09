@@ -19,7 +19,7 @@ import numpy as np
 #ex) flip 될 경우 bbox 값도 flip, rotate 했을때는 회전해서 증가한 xyxy 만큼 bbox의 위치를 늘리거나 줄여야함ㄷㄷ. Noise 의 경우에는 변동 없음,
 
 # Basic image manipulation 만 구현
-# 그중 Geometric Transformation(flip, rotate, contrast)와 Color Space transformations(gray,hsv) 만 구현
+# Geometric Transformation(flip, rotate, contrast), Color Space transformations(gray,hsv,add noise)
 # Mixing images 같은 기법은 Yolov5에서 Training 할때 어느정도 Augmentation 후 학습하기때문에 한다면 후순위로..
 
 class Augmentation_Setting:
@@ -220,15 +220,32 @@ class Geometric_Transformation(Augmentation_Setting):
             print("error in {}".format(e))
             return "rotate Failed"
 
+
+
+class Color_Space_transformation(Augmentation_Setting):
+    def __init__(self, parent=None):
+        super().__init__(parent.img_path, parent.label_path, parent.save_path, parent.set_rate)
+
+    def cv_gray_scale(self, img:np.array, cls_label:dict=None) -> tuple:
+        try:
+            cv_type = "_gray_"
+            gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            return gray_img, cls_label, cv_type
+        
+        except Exception as e:
+            print("error in {}".format(e))
+            return "gray scale fail"
+        
     def cv_add_noise(self, img:np.array, cls_label:dict=None) -> tuple:
         # 일단 가장 널리 쓰이는 가우시안 노이즈 추가. 평균이 mean 이고 표준편차가 std 인 노이즈 이미지 생성후 add로 합침.
         try:
+            
             cv_type = "_noise_"
             if ~self.set_rate:
                 self.rate_shuffle(cv_type) #random shuffle
-                mean, std, noise_type = self.rotate_angle
+                mean, std, noise_type = self.mean, self.std, self.noise_type
             else:
-                mean, std, noise_type = self.rotate_angle
+                mean, std, noise_type = self.mean, self.std, self.noise_type
 
             # Generate Gaussian noise
             gauss = np.random.normal(mean, std, img.shape).astype('uint8')
@@ -242,14 +259,6 @@ class Geometric_Transformation(Augmentation_Setting):
         except Exception as e:
             print("error in {}".format(e))
             return "add noise Failed"
-        ...
-
-class Color_Space_transformation(Augmentation_Setting):
-    def __init__(self, parent=None):
-        super().__init__(parent.img_path, parent.label_path, parent.save_path, parent.set_rate)
-
-    def cv_gray_scale(self, img:np.array, cls_label:dict=None) -> tuple:
-        
         ...
 
 class Mixing_images:
@@ -311,10 +320,9 @@ def main(opt):
         #Geometric_Transformation
         'resize': Geometric_Transformation(aug_config).cv_resize, 'flip':Geometric_Transformation(aug_config).cv_flip, 
         'translate':Geometric_Transformation(aug_config).cv_translate, 'rotate':Geometric_Transformation(aug_config).cv_rotate, 
-        'add_noise':Geometric_Transformation(aug_config).cv_add_noise
-
+        
         #Color_Space_transformation
-        #'gray_scale': Color_Space_transformation(aug_config).cv_gray
+        'add_noise':Color_Space_transformation(aug_config).cv_add_noise, 'gray_scale': Color_Space_transformation(aug_config).cv_gray_scale
     }
 
     if isinstance(aug_config.files, dict):           #self.files 가 dictionary type 일 경우, 즉 label_path 가 들어왔을 경우.
