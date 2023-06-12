@@ -316,7 +316,7 @@ def main(opt):
 
     aug_config = Augmentation_Setting(IMG_PATH, LABEL_PATH, SAVE_PATH, opt.set_rate)
 
-    augmente_dict = {
+    aug_case = {
         #Geometric_Transformation
         'resize': Geometric_Transformation(aug_config).cv_resize, 'flip':Geometric_Transformation(aug_config).cv_flip, 
         'translate':Geometric_Transformation(aug_config).cv_translate, 'rotate':Geometric_Transformation(aug_config).cv_rotate, 
@@ -333,7 +333,7 @@ def main(opt):
                     file_name = img_path.split('\\')[-1]
                     img = cv2.imread(img_path)
                     for j, aug in enumerate(selected_aug):
-                        cv_img, cv_cls_label, cv_type = augmente_dict[aug](img, cls_lable)
+                        cv_img, cv_cls_label, cv_type = aug_case[aug](img, cls_lable)
                         if opt.aug_mix:
                             img = cv_img
                             if j != len(selected_aug)-1:
@@ -358,12 +358,9 @@ def main(opt):
                         print("filename :",file_name)
                         file_path = os.path.join(IMG_PATH, file_name)
                         img = cv2.imread(file_path)
-                        print("1")
                         # execute select function 
                         for j, aug in enumerate(selected_aug):
-                            print("2")
-                            cv_img, _, cv_type = augmente_dict[aug](img)
-                            print("3")
+                            cv_img, _, cv_type = aug_case[aug](img)
                             if opt.aug_mix:
                                 img = cv_img
                                 if j != len(selected_aug)-1:
