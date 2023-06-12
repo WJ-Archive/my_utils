@@ -178,7 +178,7 @@ class Geometric_Transformation(Augmentation_Setting):
             if cls_label is not None:
                 
                 if yolo_label == True:
-                    # YoloStyle label은 정규화가 되어있어서 pixel 단위 만큼 이동시킨거라 Pixel 단위만큼 이동시킨 이 코드에서는 한번 정규화 를 거쳐야함.
+                    # YoloStyle label은 정규화가 되어있어서 Pixel 단위만큼 이동시킨 이 코드에서는 한번 정규화 를 거쳐야함.
                     lb_x_translated = float(x) / w
                     lb_y_translated = float(y) / h
                 else: 
