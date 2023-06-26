@@ -273,8 +273,6 @@ if __name__ == '__main__':
     while True:                 
         #print("Current Mouse Position", macro.position())
         schedule.run_pending()          #5초에 한번씩 스케쥴을 체크. 실행중이지 않으면 실행. 
-        #print(cnt)
-        #macro.press('.')               #보안프로그램때문에 자꾸 화면 꺼져서 꺼지지 말라고 넣음...
         time.sleep(5)
         #cnt = cnt -1 if cnt-1 else 3
 
